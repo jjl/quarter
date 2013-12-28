@@ -68,14 +68,15 @@ package object forth {
       case d::ds => Success(d, Stacks(ds, this.tokens, this.words))
       case Nil => Failure(StackEmptyException("Stack empty"))
     }
-    def popD2:Try[(Any, Any, Stacks)] = this.data match {
-      case d1::d2::ds => Success(d1,d2, Stacks(ds, this.tokens, this.words))
-      case _ => Failure(StackEmptyException("Stack empty"))
-    }
-    def popD3:Try[(Any, Any, Any, Stacks)] = this.data match {
-      case d1::d2::d3::ds => Success(d1,d2,d3,Stacks(ds, this.tokens, this.words))
-      case _ => Failure(StackEmptyException("Stack empty"))
-    }
+    def popD2:Try[(Any, Any, Stacks)] = for {
+      (d1,t2) <- this.popD
+      (d2,t3) <- t2.popD
+    } yield (d1,d2,t3)
+    def popD3:Try[(Any, Any, Any, Stacks)] = for {
+      (d1,t2) <- this.popD
+      (d2,t3) <- t2.popD
+      (d3,t4) <- t3.popD
+    } yield (d1,d2,d3,t4)
     def popDN(n: Int):Try[(List[Any],Stacks)] = {
       if (this.minD(n)) {
         val (p1, p2) = this.data.splitAt(n)
