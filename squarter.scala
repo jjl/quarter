@@ -39,27 +39,23 @@ package object forth {
       val inp = Stacks(Nil,ts,default_words)
       this.run(inp)
     }
-    def run(s: Stacks):Unit = {
-      s.popT match {
-        case Success((t,s2)) => {
-          val s3 = t match {
-            case l: Long => s2.pushD(l)
-            case i: Int => s2.pushD(i.toLong)
-            case b: Boolean => s2.pushD(b)
-            case f: Double => s2.pushD(f)
-            case Word(n,v) => s2.pure >> v
-            case _ => {
-              println("Unexpected, t")
-              Failure(UnexpectedThingException("t"))
-            }
-          }
-          s3 match {
-            case Success(s4) => this.run(s4)
-            case Failure(e) => println("Failed",t,e)
-          }
-        }
-        case _ => ()
+    def runOne(t:Any,s:Stacks):Try[Stacks] = t match {
+      case l: Long => s.pushD(l)
+      case i: Int => s.pushD(i.toLong)
+      case b: Boolean => s.pushD(b)
+      case f: Double => s.pushD(f)
+      case Word(n,v) => s.pure >> v
+      case _ => {
+        println("Unexpected, t")
+        Failure(UnexpectedThingException("t"))
       }
+    }
+    def run(s: Stacks):Unit = s.popT match {
+      case Success((t,s2)) => this.runOne(t,s2) match {
+        case Success(s3) => this.run(s3)
+        case Failure(e) => println("Failed",t,e)
+      }
+      case _ => () // Run out of program
     }
   }
 
